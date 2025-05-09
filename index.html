@@ -132,20 +132,24 @@
     let musicStarted = false;
     let liveTimer;
 
+    // Updated getTimePassed function
     function getTimePassed() {
       const startDate = new Date("2025-03-12T00:00:00Z");
       const now = new Date();
 
       const diffMs = now - startDate;
-      const diffSecs = Math.floor(diffMs / 1000);
-      const diffMins = Math.floor(diffSecs / 60);
-      const diffHours = Math.floor(diffMins / 60);
-      const diffDays = Math.floor(diffHours / 24);
-      const diffWeeks = Math.floor(diffDays / 7);
+      const diffSecs = Math.floor(diffMs / 1000); // Total seconds
+      const diffMins = Math.floor(diffSecs / 60); // Total minutes
+      const diffHours = Math.floor(diffMins / 60); // Total hours
+      const diffDays = Math.floor(diffHours / 24); // Total days
       const years = now.getFullYear() - startDate.getFullYear();
       const months = (now.getMonth() - startDate.getMonth()) + (12 * years);
 
-      return `${months} months, ${diffWeeks} weeks, ${diffDays} days, ${diffHours} hours`;
+      // Calculate minutes and seconds left
+      const remainingMinutes = diffMins % 60; // Minutes left after removing full hours
+      const remainingSeconds = diffSecs % 60; // Seconds left after removing full minutes
+
+      return `${months} months, ${diffDays} days, ${diffHours} hours, ${remainingMinutes} minutes, ${remainingSeconds} seconds`;
     }
 
     function typeMessage(text, callback) {
