@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Birthday for Janvi</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: 'Courier New', Courier, monospace;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: block;
+      z-index: 0;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #typewriter {
+      font-size: 3em; /* Increased font size */
+      white-space: pre-wrap;
+      max-width: 90%;
+      margin-bottom: 20px;
+      position: relative; /* For the underline effect */
+    }
+
+    /* Smooth underline animation */
+    #typewriter.underline::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: #fff;
+      transition: width 1s ease-in-out; /* Smooth transition for the underline */
+    }
+
+    #typewriter.underline {
+      padding-bottom: 10px; /* Space for underline */
+    }
+
+    #typewriter.underline.active::after {
+      width: 100%; /* When the underline becomes active, it grows to full width */
+    }
+
+    #glowButton {
+      padding: 12px 24px;
+      font-size: 1em;
+      color: #fff;
+      background: #111;
+      border: 2px solid #fff;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #glowButton.glow {
+      box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+    }
+
+    #glowButton.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Fireworks Styles */
+    .firework {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #ffcc00;
+      border-radius: 50%;
+      animation: firework-explode 2s ease-in-out forwards;
+    }
+
+    @keyframes firework-explode {
+      0% {
+        transform: scale(1) translateY(0) translateX(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(5) translateY(-500px) translateX(500px);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="snow"></canvas>
+
+  <div class="content">
+    <div id="typewriter"></div>
+    <button id="glowButton">Click me</button>
+  </div>
+
+  <!-- 🔊 Background Music -->
+  <audio id="bgMusic" src="https://raw.githubusercontent.com/Haruie/birthday-audio/main/birthday-music.mp3" loop></audio>
+
+  <script>
+    const messages = [
+      "Hey Janvi..",
+      "It's been [Time] since we started dating",
+      "I didnt know what else to type sorry 😭",
+      "Happy Birthday Janvi"
+    ];
+
+    let messageIndex = 0;
+    const typewriter = document.getElementById("typewriter");
+    const button = document.getElementById("glowButton");
+    const music = document.getElementById("bgMusic");
+    let musicStarted = false;
+    let liveTimer;
+
+    function getTimePassed() {
+      const startDate = new Date("2025-03-12T00:00:00Z");
+      const now = new Date();
+
+      const diffMs = now - startDate;
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      const diffWeeks = Math.floor(diffDays / 7);
+      const years = now.getFullYear() - startDate.getFullYear();
+      const months = (now.getMonth() - startDate.getMonth()) + (12 * years);
+
+      return `${months} months, ${diffWeeks} weeks, ${diffDays} days, ${diffHours} hours`;
+    }
+
+    function typeMessage(text, callback) {
+      let i = 0;
+      typewriter.textContent = "";
+      clearInterval(liveTimer);
+
+      function typing() {
+        if (i < text.length) {
+          typewriter.textContent += text.charAt(i);
+          i++;
+          setTimeout(typing, 50);
+        } else {
+          if (text.includes("[Time]")) {
+            startLiveTimeUpdate();
+          }
+          if (callback) callback();
+        }
+      }
+
+      typing();
+    }
+
+    function startLiveTimeUpdate() {
+      liveTimer = setInterval(() => {
+        const updated = messages[1].replace("[Time]", getTimePassed());
+        typewriter.textContent = updated;
+      }, 1000);
+    }
+
+    function prepareButton() {
+      button.classList.add("visible", "glow");
+      button.disabled = false;
+    }
+
+    function nextMessage() {
+      button.classList.remove("glow", "visible");
+      button.disabled = true;
+
+      if (messageIndex < messages.length) {
+        const currentMessage = messages[messageIndex];
+        typeMessage(currentMessage, () => {
+          messageIndex++;
+          setTimeout(() => {
+            prepareButton();
+          }, 500);
+        });
+      } else {
+        // Trigger fireworks when the last message is typed
+        if (messageIndex === messages.length) {
+          startFireworks();
+          // Underline the last message with smooth animation
+          typewriter.classList.add("underline");
+          setTimeout(() => typewriter.classList.add("active"), 50); // Trigger animation after small delay
+        }
+      }
+    }
+
+    // Fade-in music over 3 seconds
+    function fadeInMusic(audioElement, duration = 3000) {
+      audioElement.volume = 0;
+      audioElement.play().catch(err => console.log("Autoplay blocked:", err));
+      const step = 0.01;
+      const interval = duration / (1 / step);
+      const fadeInterval = setInterval(() => {
+        if (audioElement.volume < 1) {
+          audioElement.volume = Math.min(1, audioElement.volume + step);
+        } else {
+          clearInterval(fadeInterval);
+        }
+      }, interval);
+    }
+
+    function startFireworks() {
+      // Generate multiple fireworks across the screen
+      const numFireworks = 50;
+      for (let i = 0; i < numFireworks; i++) {
+        let firework = document.createElement('div');
+        firework.classList.add('firework');
+        firework.style.left = `${Math.random() * 100}vw`;  // Spread horizontally
+        firework.style.bottom = `${Math.random() * 100}vh`;  // Spread vertically
+        firework.style.animationDuration = `${Math.random() * 3 + 2}s`; // Randomize firework duration (2s to 5s)
+        document.body.appendChild(firework);
+        // Remove firework after animation ends
+        setTimeout(() => firework.remove(), 5000);  // Let the fireworks last a bit longer
+      }
+    }
+
+    prepareButton();
+
+    button.addEventListener("click", () => {
+      if (!musicStarted) {
+        fadeInMusic(music, 3000);
+        musicStarted = true;
+      }
+      nextMessage();
+    });
+  </script>
+
+  <script>
+    const canvas = document.getElementById('snow');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const colours = ['#ff0000', '#00ff00', '#ffffff', '#ff00ff', '#ffa500', '#ffff00', '#00ffff', '#ff69b4', '#00ffcc'];
+
+    const particles = [];
+    const numParticles = 150;
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * -height;
+        this.radius = Math.random() * 2 + 1;
+        this.speed = Math.random() * 1.5 + 0.5;
+        this.drift = (Math.random() - 0.5) * 1;
+        this.alpha = Math.random() * 0.5 + 0.5;
+        this.color = colours[Math.floor(Math.random() * colours.length)];
+      }
+
+      update() {
+        this.y += this.speed;
+        this.x += this.drift;
+
+        if (this.y > height) {
+          this.reset();
+          this.y = 0;
+        }
+
+        if (this.x < 0 || this.x > width) {
+          this.drift *= -1;
+        }
+      }
+
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    for (let i = 0; i < numParticles; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      for (let p of particles) {
+        p.update();
+        p.draw(ctx);
+      }
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
